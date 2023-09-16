@@ -187,9 +187,9 @@ void XRioRos::run()
 }
 
 void XRioRos::runFromRosbag(const std::string& rosbag_path,
-                              const Real bag_start,
-                              const Real bag_duration,
-                              const Real sleep_ms)
+                            const Real bag_start,
+                            const Real bag_duration,
+                            const Real sleep_ms)
 {
   rosbag::Bag source_bag;
   source_bag.open(rosbag_path, rosbag::bagmode::Read);
@@ -247,6 +247,9 @@ void XRioRos::runFromRosbag(const std::string& rosbag_path,
       const auto imu_msg_bag = m.instantiate<sensor_msgs::Imu>();
       if (imu_msg_bag != NULL)
       {
+        // double ct = imu_msg_bag->header.stamp.toSec();
+        // ct += 0.1;
+        // imu_msg_bag->header.stamp = ros::Time(ct);
         callbackIMU(imu_msg_bag);
       }
     }
@@ -303,22 +306,27 @@ void XRioRos::runFromRosbag(const std::string& rosbag_path,
 
         if (iter_id != radar_topic_to_id.end())
         {
+
+          std_msgs::Header h = radar_scan->header;
+          h.stamp += ros::Duration(0.1);
+          callbackRadarTrigger(iter_id->second, h);
+
           callbackRadarScan(iter_id->second, radar_scan);
           if (sleep_ms > 0)
             ros::Duration(sleep_ms / 1.0e3).sleep();
         }
       }
-      else
-      {
-        const auto iter_id = radar_topic_to_id.find(topic);
+      // else
+      // {
+      //   const auto iter_id = radar_topic_to_id.find(topic);
 
-        if (iter_id != radar_topic_to_id.end())
-        {
-          const auto radar_trigger = m.instantiate<std_msgs::Header>();
-          if (radar_trigger)
-            callbackRadarTrigger(iter_id->second, radar_trigger);
-        }
-      }
+      //   if (iter_id != radar_topic_to_id.end())
+      //   {
+      //     const auto radar_trigger = m.instantiate<std_msgs::Header>();
+      //     if (radar_trigger)
+      //       callbackRadarTrigger(iter_id->second, radar_trigger);
+      //   }
+      // }
     }
 
     iterate();
@@ -418,7 +426,8 @@ void XRioRos::iterateRadarTrigger()
 
       const auto radar_trigger_msg            = trigger.second;
       const auto time_diff_filter             = x_rio_filter_.getTimestamp().toSec() - radar_trigger_msg.stamp.toSec();
-      const auto radar_trigger_to_clone_delay = 0.5 * config_.radar_frame_ms / 1.0e3;
+      const auto radar_trigger_to_clone_delay = 1.0 * config_.radar_frame_ms / 1.0e3;
+      printf("time diff: %f, delay: %f, rfms: %f, imu_dt: %f\n",time_diff_filter, radar_trigger_to_clone_delay, config_.radar_frame_ms, imu_data_.dt);
 
       if (std::fabs(time_diff_filter) <= imu_data_.dt / 2)
       {
@@ -741,6 +750,20 @@ void XRioRos::callbackRadarTrigger(const uint id, const std_msgs::HeaderConstPtr
 {
   mutex_.lock();
   queue_radar_trigger_.push({id, *trigger_msg});
+  mutex_.unlock();
+}
+
+void XRioRos::callbackRadarTrigger(const uint id, const std_msgs::Header& trigger_msg)
+{
+  mutex_.lock();
+  queue_radar_trigger_.push({id, trigger_msg});
+  mutex_.unlock();
+}
+
+void XRioRos::callbackRadarTrigger(const uint id, const sensor_msgs::PointCloud2ConstPtr& radar_msg)
+{
+  mutex_.lock();
+  queue_radar_trigger_.push({id, radar_msg->header});
   mutex_.unlock();
 }
 

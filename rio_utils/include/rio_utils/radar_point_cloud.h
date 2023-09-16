@@ -50,6 +50,15 @@ struct mmWaveCloudType
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
+struct rplradarCloudType
+{
+    PCL_ADD_POINT4D;
+    float snr;
+    float doppler;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW // make sure our new allocators are aligned
+};
+
+
 bool pcl2msgToPcl(const sensor_msgs::PointCloud2& pcl_msg, pcl::PointCloud<RadarPointCloudType>& scan);
 
 bool pclToPcl2msg(pcl::PointCloud<RadarPointCloudType> scan, sensor_msgs::PointCloud2& pcl_msg);

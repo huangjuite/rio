@@ -20,6 +20,7 @@
 #include <queue>
 #include <mutex>
 #include <random>
+#include <filesystem>
 
 #include <ros/ros.h>
 #include <dynamic_reconfigure/server.h>
@@ -132,6 +133,8 @@ private:
    * mode) or by the rosbag loop (rosbag mode)
    */
   void callbackRadarTrigger(const uint id, const std_msgs::HeaderConstPtr& trigger_msg);
+  void callbackRadarTrigger(const uint id, const std_msgs::Header& trigger_msg);
+  void callbackRadarTrigger(const uint id, const sensor_msgs::PointCloud2ConstPtr& radar_msg);
 
   /**
    * @brief Does all ros publishing

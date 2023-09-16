@@ -36,6 +36,13 @@ POINT_CLOUD_REGISTER_POINT_STRUCT (mmWaveCloudType,
                                     (float, z, z)
                                     (float, intensity, intensity)
                                     (float, velocity, velocity))
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (rplradarCloudType,
+                                    (float, x, x)
+                                    (float, y, y)
+                                    (float, z, z)
+                                    (float, snr, snr)
+                                    (float, doppler, doppler))
 // clang-format on
 
 bool rio::pcl2msgToPcl(const sensor_msgs::PointCloud2& pcl_msg, pcl::PointCloud<RadarPointCloudType>& scan)
@@ -77,6 +84,31 @@ bool rio::pcl2msgToPcl(const sensor_msgs::PointCloud2& pcl_msg, pcl::PointCloud<
       p_.z             = p.z;
       p_.snr_db        = p.intensity;
       p_.v_doppler_mps = p.velocity;
+      p_.range         = p.getVector3fMap().norm();
+      p_.noise_db      = -1.;
+      scan.push_back(p_);
+    }
+    return true;
+  }
+  else if (fields.find("x") != fields.end() && fields.find("y") != fields.end() && fields.find("z") != fields.end() &&
+           fields.find("snr") != fields.end() && fields.find("doppler") != fields.end())
+  {
+    ROS_INFO_ONCE("[pcl2msgToPcl]: Detected rpl radar pcl format!");
+
+    pcl::PointCloud<rplradarCloudType> scan_mmwave;
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl_conversions::toPCL(pcl_msg, pcl_pc2);
+    pcl::fromPCLPointCloud2(pcl_pc2, scan_mmwave);
+
+    scan.clear();
+    for (const auto& p : scan_mmwave)
+    {
+      RadarPointCloudType p_;
+      p_.x             = p.x;
+      p_.y             = p.y;
+      p_.z             = p.z;
+      p_.snr_db        = log(p.snr);
+      p_.v_doppler_mps = p.doppler;
       p_.range         = p.getVector3fMap().norm();
       p_.noise_db      = -1.;
       scan.push_back(p_);

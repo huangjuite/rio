@@ -4,14 +4,14 @@ project(x_rio)
 find_package(catkin_simple REQUIRED)
 catkin_simple()
 
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -march=native")
 
 cs_add_library(${PROJECT_NAME}
    src/data_types.cpp
-   src/x_rio_ros.cpp
+   src/x_rio_rpl.cpp
    src/x_rio_filter.cpp
    src/yaw_aiding_manhattan_world.cpp
 )
