@@ -1,0 +1,20 @@
+[build-system]
+requires = ["scikit-build-core>=0.10.0", "nanobind>=2.4.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pyekf-rio"
+version = "0.1.0"
+description = "ROS-free Python interface to ekf_rio and reve"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Ray", email = "juiteh@andrew.cmu.edu" }]
+dependencies = ["numpy", "pyyaml"]
+
+[tool.scikit-build]
+wheel.packages = ["pyekf_rio/python/pyekf_rio"]
+
+[tool.scikit-build.cmake]
+source-dir = "pyekf_rio/src"
+version = ">=3.22"
+args = ["-DBUILD_PYTHON_BINDINGS=ON"]
