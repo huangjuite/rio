@@ -17,6 +17,8 @@
 #pragma once
 
 #include <atomic>
+#include <fstream>
+#include <iomanip>
 #include <queue>
 #include <mutex>
 #include <random>
@@ -160,6 +162,7 @@ private:
   ros::Publisher pub_pose_path_;
   ros::Publisher pub_pose_;
   ros::Publisher pub_twist_;
+  std::ofstream trajectory_file_;  // tartanstar: optional `~trajectory_file` output
   ros::Publisher pub_combined_radar_scan_;
   std::vector<ros::Publisher> pubs_radar_scan_inlier_;
   ros::Publisher pub_radar_yaw_inlier_;

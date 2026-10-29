@@ -43,6 +43,11 @@ XRioRos::XRioRos(ros::NodeHandle& nh) : nh_{nh}, initialized_{false}, yaw_aiding
 {
   reconfigure_server_.setCallback(boost::bind(&XRioRos::reconfigureCallback, this, _1, _2));
 
+  // tartanstar: write every published state to a file (topics have queue size 1 and drop messages offline)
+  std::string trajectory_file;
+  if (nh.getParam("trajectory_file", trajectory_file) && !trajectory_file.empty())
+    trajectory_file_.open(trajectory_file);
+
   // subscribers
   sub_imu_  = nh.subscribe<sensor_msgs::Imu>(config_.topic_imu, 2, boost::bind(&XRioRos::callbackIMU, this, _1));
   sub_baro_ = nh.subscribe<sensor_msgs::FluidPressure>(
@@ -778,6 +783,17 @@ void XRioRos::publish()
   odom.twist.covariance.at(4) = covariance(state_idx.velocity + 1, state_idx.velocity + 1);
   odom.twist.covariance.at(8) = covariance(state_idx.velocity + 2, state_idx.velocity + 2);
   pub_odometry_.publish(odom);
+
+  // tartanstar: "t px py pz qx qy qz qw vx vy vz", same frames as ~odom
+  if (trajectory_file_.is_open())
+  {
+    const auto& p = odom.pose.pose.position;
+    const auto& q = odom.pose.pose.orientation;
+    const auto& v = odom.twist.twist.linear;
+    trajectory_file_ << std::fixed << std::setprecision(9) << odom.header.stamp.toSec() << " " << p.x << " " << p.y
+                     << " " << p.z << " " << q.x << " " << q.y << " " << q.z << " " << q.w << " " << v.x << " " << v.y
+                     << " " << v.z << "\n";
+  }
 
   // pose path
   pose_path_.poses.emplace_back(pose_stamped);
